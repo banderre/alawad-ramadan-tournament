@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بطولة العواد الرمضانية</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tajawal Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0a1128',
+                            card: '#101f42',
+                            gold: '#dfb15b',
+                            accent: '#ef4444',
+                            blue: '#0284c7'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #060a17;
+            color: #FFFFFF;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #060a17;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #dfb15b;
+            border-radius: 4px;
+        }
+        .active-tab {
+            background-color: #dfb15b !important;
+            color: #0a1128 !important;
+            font-weight: 900 !important;
+            box-shadow: 0 0 12px rgba(223, 177, 91, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- First-Time Device Access Popup -->
+    <div id="accessGateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md hidden">
+        <div class="bg-brand-card border-2 border-brand-gold rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full border border-brand-gold bg-brand-dark flex items-center justify-center shadow-lg shadow-brand-gold/20">
+                <i class="fa-solid fa-trophy text-2xl text-brand-gold"></i>
+            </div>
+            <h2 class="text-2xl font-black text-brand-gold mb-1">بطولة العواد الرمضانية</h2>
+            <p class="text-gray-300 text-xs mb-4">أدخل اسمك الكريم لمرة واحدة للدخول عبر هذا الجهاز:</p>
+            
+            <form onsubmit="submitAccessName(event)" class="space-y-3">
+                <input type="text" id="visitorFullName" required placeholder="أدخل اسمك هنا..." 
+                    class="w-full px-4 py-2.5 bg-brand-dark border border-brand-gold/40 rounded-xl text-center text-white text-sm placeholder-gray-500 focus:outline-none focus:border-brand-gold">
+                <div id="gateError" class="text-brand-accent text-xs hidden font-bold">يرجى إدخال اسم صحيح للمتابعة!</div>
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-brand-gold to-yellow-600 text-brand-dark font-black rounded-xl text-sm shadow-md hover:brightness-110 transition">
+                    حفظ والدخول <i class="fa-solid fa-arrow-left mr-1"></i>
+                </button>
+            </form>
+            <p class="text-[10px] text-gray-400 mt-4 font-semibold">تحت إشراف الإدارة المنظمة للبطولة</p>
+        </div>
+    </div>
+
+    <!-- Admin Password Modal -->
+    <div id="adminModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md hidden">
+        <div class="bg-brand-card border-2 border-brand-gold/60 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+            <button onclick="closeAdminModal()" class="absolute top-3 left-3 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center mb-4">
+                <i class="fa-solid fa-lock text-3xl text-brand-gold mb-2"></i>
+                <h3 class="text-lg font-black text-brand-gold">دخول لوحة التحكم</h3>
+                <p class="text-[10px] text-gray-400">تحت إشراف الإدارة المنظمة للبطولة</p>
+            </div>
+            <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+                <input type="password" id="adminPassInput" required placeholder="رمز الدخول (B32)..." 
+                    class="w-full px-4 py-2.5 bg-brand-dark border border-gray-700 rounded-xl text-center text-white text-sm focus:border-brand-gold focus:outline-none">
+                <div id="adminLoginErr" class="text-brand-accent text-xs font-bold text-center hidden">رمز الدخول غير صحيح!</div>
+                <button type="submit" class="w-full py-2.5 bg-brand-gold text-brand-dark font-black rounded-xl text-sm shadow-md hover:bg-amber-400 transition">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastAlert" class="fixed top-4 left-4 z-50 hidden bg-brand-gold text-brand-dark px-4 py-2.5 rounded-xl shadow-2xl font-black text-xs border border-white/20 transition-all">
+        <i class="fa-solid fa-circle-check ml-1"></i> <span id="toastMsg">تم الإجراء بنجاح</span>
+    </div>
+
+    <!-- MAIN APP STRUCTURE -->
+    <div class="flex-1 flex flex-col">
+
+        <!-- HEADER -->
+        <header class="bg-gradient-to-r from-brand-card via-brand-dark to-brand-card border-b border-brand-gold/40 py-2.5 px-4 shadow-xl">
+            <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl border border-brand-gold p-1 bg-brand-dark flex items-center justify-center shadow-md shadow-brand-gold/20">
+                        <i class="fa-solid fa-trophy text-lg text-brand-gold"></i>
+                    </div>
+                    <div class="text-center md:text-right">
+                        <h1 class="text-base md:text-lg font-black text-brand-gold tracking-wide">بطولة العواد الرمضانية</h1>
+                        <p class="text-[10px] text-gray-300 font-medium">تحت إشراف الإدارة المنظمة للبطولة</p>
+                    </div>
+                </div>
+
+                <!-- Derby Badge -->
+                <div class="flex items-center gap-2 bg-brand-dark/90 px-3 py-1 rounded-xl border border-brand-gold/30 text-xs">
+                    <span class="font-black text-white">الفرسان</span>
+                    <span class="text-brand-gold font-black italic">VS</span>
+                    <span class="font-black text-white">التحدي</span>
+                </div>
+
+                <!-- Device Logged Name & Admin Gate -->
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 bg-brand-dark/90 px-3 py-1 rounded-xl border border-brand-gold/30">
+                        <i class="fa-solid fa-user-check text-brand-gold text-xs"></i>
+                        <span id="displayVisitorName" class="font-black text-brand-gold text-xs">الجهاز</span>
+                    </div>
+
+                    <button onclick="openAdminModal()" class="px-2.5 py-1 bg-brand-dark hover:bg-brand-card text-brand-gold border border-brand-gold/40 rounded-xl text-xs font-black transition flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-[10px]"></i> الإدارة
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ROOMS NAVIGATION BAR (6 Rooms) -->
+        <nav class="bg-brand-dark border-b border-gray-800 px-2 py-2 sticky top-0 z-40 backdrop-blur-md shadow-md">
+            <div class="max-w-4xl mx-auto flex items-center justify-start md:justify-center gap-1.5 overflow-x-auto py-0.5">
+                <button onclick="switchRoom('announcements')" id="tab-announcements" class="room-tab active-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-bullhorn"></i> البيانات
+                </button>
+                <button onclick="switchRoom('matches')" id="tab-matches" class="room-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300 hover:text-white bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-calendar-days"></i> المباريات
+                </button>
+                <button onclick="switchRoom('history')" id="tab-history" class="room-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300 hover:text-white bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-book-open"></i> سجل البطولة
+                </button>
+                <button onclick="switchRoom('fursan')" id="tab-fursan" class="room-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300 hover:text-white bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-shield-halved text-brand-gold"></i> الفرسان
+                </button>
+                <button onclick="switchRoom('tahadi')" id="tab-tahadi" class="room-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300 hover:text-white bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-bolt text-brand-blue"></i> التحدي
+                </button>
+                <button onclick="switchRoom('awards')" id="tab-awards" class="room-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300 hover:text-white bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-award text-amber-400"></i> التكريم
+                </button>
+                <button onclick="switchRoom('suggestions')" id="tab-suggestions" class="room-tab px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300 hover:text-white bg-brand-card border border-gray-800">
+                    <i class="fa-solid fa-comment-dots"></i> الاقتراحات
+                </button>
+            </div>
+        </nav>
+
+        <!-- MAIN ROOMS CONTENT -->
+        <main class="max-w-3xl mx-auto px-3 py-4 flex-1 w-full space-y-4">
+
+            <!-- ROOM 1: Announcements -->
+            <section id="room-announcements" class="room-content space-y-3">
+                <div class="bg-brand-card border border-brand-gold/30 rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2.5 mb-3">
+                        <h2 class="text-sm md:text-base font-black text-brand-gold flex items-center gap-2">
+                            <i class="fa-solid fa-scroll"></i> البيانات الرسمية
+                        </h2>
+                        <span class="bg-brand-gold/20 text-brand-gold px-2.5 py-0.5 rounded-full text-[10px] font-black border border-brand-gold/30">إعلان مثبت</span>
+                    </div>
+                    <div class="space-y-2 text-xs md:text-sm">
+                        <h3 class="font-black text-white">أهلاً بكم في بطولة العواد الرمضانية</h3>
+                        <p class="text-gray-300 leading-relaxed text-xs">
+                            تقام البطولة بنظام المواجهة المباشرة (ذهاب وإياب) بين فريقي الفرسان والتحدي. نأمل من الجميع الالتزام بالروح الرياضية والوقت المحدد للمباريات.
+                        </p>
+                        <p class="text-[10px] text-brand-gold font-bold pt-2 border-t border-gray-800/60">تحت إشراف الإدارة المنظمة للبطولة</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROOM 2: Matches Schedule -->
+            <section id="room-matches" class="room-content hidden space-y-3">
+                <div class="bg-brand-card border border-gray-800 rounded-2xl p-4 shadow-xl space-y-3">
+                    <h2 class="text-sm md:text-base font-black text-brand-gold border-b border-gray-800 pb-2.5 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days"></i> جدول مواجهات الذهاب والإياب
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Leg 1 -->
+                        <div class="bg-brand-dark p-3.5 rounded-xl border border-gray-800 space-y-2">
+                            <div class="flex justify-between items-center text-[10px] font-bold text-gray-400 border-b border-gray-800 pb-1.5">
+                                <span class="text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">مباراة الذهاب</span>
+                                <span id="m1-time">موثقة في الأرشيف</span>
+                            </div>
+                            <div class="flex items-center justify-between py-1">
+                                <div class="text-center font-black text-xs text-white">الفرسان</div>
+                                <div id="m1-score" class="text-base font-black text-brand-gold px-3 py-1 bg-brand-card rounded-lg border border-gray-800">- : -</div>
+                                <div class="text-center font-black text-xs text-white">التحدي</div>
+                            </div>
+                        </div>
+
+                        <!-- Leg 2 -->
+                        <div class="bg-brand-dark p-3.5 rounded-xl border border-gray-800 space-y-2">
+                            <div class="flex justify-between items-center text-[10px] font-bold text-gray-400 border-b border-gray-800 pb-1.5">
+                                <span class="text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">مباراة الإياب</span>
+                                <span id="m2-time">موثقة في الأرشيف</span>
+                            </div>
+                            <div class="flex items-center justify-between py-1">
+                                <div class="text-center font-black text-xs text-white">التحدي</div>
+                                <div id="m2-score" class="text-base font-black text-brand-gold px-3 py-1 bg-brand-card rounded-lg border border-gray-800">- : -</div>
+                                <div class="text-center font-black text-xs text-white">الفرسان</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROOM 3: Historical Archive -->
+            <section id="room-history" class="room-content hidden space-y-3">
+                <div class="bg-brand-card border border-brand-gold/30 rounded-2xl p-4 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2.5">
+                        <h2 class="text-sm md:text-base font-black text-brand-gold flex items-center gap-2">
+                            <i class="fa-solid fa-book-open"></i> الأرشيف التاريخي للبطولة
+                        </h2>
+                        <span class="text-[10px] text-brand-gold bg-brand-gold/10 border border-brand-gold/20 px-2 py-1 rounded-lg">النسخة الماضية</span>
+                    </div>
+                    <div class="bg-brand-dark rounded-xl border border-brand-gold/20 p-3 text-center">
+                        <p class="text-[10px] text-gray-400">تاريخ تأسيس البطولة</p>
+                        <p class="text-lg font-black text-brand-gold">2021</p>
+                        <p class="text-[10px] text-gray-400">تأسست بطولة العواد الرمضانية عام 2021</p>
+                    </div>
+                    <div class="rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-dark to-brand-card p-4 text-center space-y-2">
+                        <p class="text-[10px] text-gray-400 font-bold">بطل بطولة العواد الرمضانية</p>
+                        <div class="text-2xl md:text-3xl font-black text-brand-gold">فريق الفرسان</div>
+                        <div class="inline-flex items-center gap-3 rounded-xl bg-black/20 border border-brand-gold/20 px-4 py-2">
+                            <span class="text-white font-black">الفرسان</span>
+                            <span class="text-2xl font-black text-brand-gold">8 : 8</span>
+                            <span class="text-white font-black">التحدي</span>
+                        </div>
+                        <p class="text-xs text-gray-300 leading-relaxed">تُوّج فريق الفرسان بالبطولة بعد تفوقه على فريق التحدي بمجموع المواجهتين، مستفيداً من تقدمه في مباراة الذهاب.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-brand-dark rounded-xl border border-gray-800 p-3 space-y-1">
+                            <p class="text-[10px] text-gray-400">المباراة النهائية</p>
+                            <p class="font-black text-white text-sm">الفرسان × التحدي</p>
+                            <p class="text-xs text-brand-gold">الثلاثاء 21 رمضان</p>
+                        </div>
+                        <div class="bg-brand-dark rounded-xl border border-gray-800 p-3 space-y-1">
+                            <p class="text-[10px] text-gray-400">حصيلة البطولة</p>
+                            <p class="font-black text-white text-sm">ذهاب وإياب</p>
+                            <p class="text-xs text-gray-300">حُسم اللقب لصالح الفرسان بالتقدم في مباراة الذهاب</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-black text-brand-gold"><i class="fa-solid fa-award ml-1"></i> سجل الجوائز والتكريم</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div class="bg-brand-dark border border-brand-gold/20 rounded-xl p-3 text-center">
+                                <i class="fa-solid fa-futbol text-brand-gold"></i>
+                                <p class="text-[10px] text-gray-400 mt-1">هداف البطولة</p>
+                                <p class="font-black text-white text-sm">سعود لايق</p>
+                                <p class="text-[10px] text-gray-500">فريق الفرسان</p>
+                            </div>
+                            <div class="bg-brand-dark border border-brand-gold/20 rounded-xl p-3 text-center">
+                                <i class="fa-solid fa-hand text-brand-gold"></i>
+                                <p class="text-[10px] text-gray-400 mt-1">أفضل حارس</p>
+                                <p class="font-black text-white text-sm">باسل سعد</p>
+                                <p class="text-[10px] text-gray-500">فريق الفرسان</p>
+                            </div>
+                            <div class="bg-brand-dark border border-brand-gold/20 rounded-xl p-3 text-center">
+                                <i class="fa-solid fa-star text-brand-gold"></i>
+                                <p class="text-[10px] text-gray-400 mt-1">أفضل لاعب</p>
+                                <p class="font-black text-white text-sm">ريان مفرح</p>
+                                <p class="text-[10px] text-gray-500">فريق التحدي</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-800 pt-3">
+                        <h3 class="text-xs font-black text-brand-gold mb-2"><i class="fa-solid fa-landmark ml-1"></i> توثيق النسخة</h3>
+                        <p class="text-xs text-gray-300 leading-7">يُحفظ هذا السجل لتوثيق نتائج بطولة العواد الرمضانية وأبطالها ولاعبيها والجوائز الفردية، ليكون مرجعاً تاريخياً للنسخ القادمة. وتُضاف أي نسخة جديدة إلى الأرشيف مع نتائجها وتفاصيلها المعتمدة.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROOM 4: Al-Fursan -->
+            <section id="room-fursan" class="room-content hidden space-y-3">
+                <div class="bg-brand-card border border-brand-gold/30 rounded-2xl p-4 shadow-xl space-y-3">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2.5">
+                        <h2 class="text-sm md:text-base font-black text-brand-gold flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> قائمة فريق الفرسان (8 لاعبين)
+                        </h2>
+                    </div>
+                    <div id="fursanRosterList" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+                </div>
+            </section>
+
+            <!-- ROOM 5: Al-Tahadi -->
+            <section id="room-tahadi" class="room-content hidden space-y-3">
+                <div class="bg-brand-card border border-brand-blue/30 rounded-2xl p-4 shadow-xl space-y-3">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2.5">
+                        <h2 class="text-sm md:text-base font-black text-brand-blue flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> قائمة فريق التحدي (8 لاعبين)
+                        </h2>
+                    </div>
+                    <div id="tahadiRosterList" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+                </div>
+            </section>
+
+            <!-- ROOM 6: Awards -->
+            <section id="room-awards" class="room-content hidden space-y-3">
+                <div class="bg-brand-card border border-brand-gold/30 rounded-2xl p-4 shadow-xl space-y-3">
+                    <h2 class="text-sm md:text-base font-black text-brand-gold border-b border-gray-800 pb-2.5 flex items-center gap-2">
+                        <i class="fa-solid fa-award"></i> جوائز الأفضلية
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="bg-brand-dark p-3.5 rounded-xl border border-brand-gold/30 text-center space-y-1">
+                            <i class="fa-solid fa-mitten text-brand-gold text-lg"></i>
+                            <h3 class="text-brand-gold font-black text-xs">أفضل حارس</h3>
+                            <div id="awardGK" class="text-white font-black text-sm">باسل سعد</div>
+                            <span class="text-[9px] text-gray-400">فريق الفرسان</span>
+                        </div>
+                        <div class="bg-brand-dark p-3.5 rounded-xl border border-brand-gold/30 text-center space-y-1">
+                            <i class="fa-solid fa-star text-brand-gold text-lg"></i>
+                            <h3 class="text-brand-gold font-black text-xs">أفضل لاعب</h3>
+                            <div id="awardMVP" class="text-white font-black text-sm">ريان مفرح</div>
+                            <span class="text-[9px] text-gray-400">فريق التحدي</span>
+                        </div>
+                        <div class="bg-brand-dark p-3.5 rounded-xl border border-brand-gold/30 text-center space-y-1">
+                            <i class="fa-solid fa-futbol text-brand-gold text-lg"></i>
+                            <h3 class="text-brand-gold font-black text-xs">هداف البطولة</h3>
+                            <div id="awardScorer" class="text-white font-black text-sm">سعود لايق</div>
+                            <span class="text-[9px] text-gray-400">فريق الفرسان</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROOM 7: Suggestions Box -->
+            <section id="room-suggestions" class="room-content hidden space-y-3">
+                <div class="bg-brand-card border border-gray-800 rounded-2xl p-4 shadow-xl space-y-3">
+                    <h2 class="text-sm md:text-base font-black text-brand-gold border-b border-gray-800 pb-2.5 flex items-center gap-2">
+                        <i class="fa-solid fa-comment-dots"></i> صندوق الاقتراحات والملاحظات
+                    </h2>
+                    <form onsubmit="sendSuggestion(event)" class="space-y-2">
+                        <textarea id="sugText" rows="3" required placeholder="اكتب اقتراحك الموجه للإدارة هنا..." 
+                            class="w-full px-3 py-2 bg-brand-dark border border-gray-700 rounded-xl text-white text-xs focus:border-brand-gold focus:outline-none"></textarea>
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-5 py-2 bg-brand-gold hover:bg-amber-400 text-brand-dark font-black rounded-xl text-xs transition">
+                                إرسال الاقتراح <i class="fa-solid fa-paper-plane mr-1"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ADMIN CONTROL PANEL (Password B32) -->
+            <section id="adminControlPanel" class="hidden space-y-4 bg-brand-dark border-2 border-brand-gold p-4 rounded-2xl shadow-2xl">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2.5">
+                    <div>
+                        <h3 class="text-sm md:text-base font-black text-brand-gold">لوحة تحكم الإدارة</h3>
+                        <p class="text-[9px] text-gray-400">تحت إشراف الإدارة المنظمة للبطولة</p>
+                    </div>
+                    <button onclick="logoutAdmin()" class="px-3 py-1 bg-brand-accent text-white font-bold rounded-lg text-xs">خروج</button>
+                </div>
+
+                <!-- Live Registered Users Log -->
+                <div class="bg-brand-card p-3.5 rounded-xl border border-brand-gold/30 space-y-2">
+                    <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                        <span class="text-xs font-black text-brand-gold"><i class="fa-solid fa-users"></i> سجل أسماء الأجهزة التي دخلت:</span>
+                        <button onclick="clearAllRegisteredUsers()" class="px-2 py-0.5 bg-red-900/40 border border-red-500/50 text-red-300 font-bold text-[10px] rounded">مسح السجل</button>
+                    </div>
+                    <div id="registeredUsersContainer" class="max-h-36 overflow-y-auto space-y-1 text-xs"></div>
+                </div>
+
+                <!-- Admin Editing Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div class="bg-brand-card p-3 rounded-xl border border-gray-800 space-y-2">
+                        <h4 class="font-black text-brand-gold">تعديل نتائج المباريات</h4>
+                        <input type="text" id="adminM1Time" placeholder="وقت الذهاب" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <input type="text" id="adminM1Score" placeholder="نتيجة الذهاب (مثل 2-1)" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <input type="text" id="adminM2Time" placeholder="وقت الإياب" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <input type="text" id="adminM2Score" placeholder="نتيجة الإياب" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <button onclick="saveMatchSettings()" class="w-full py-1.5 bg-brand-gold text-brand-dark font-black rounded">حفظ التحديثات</button>
+                    </div>
+
+                    <div class="bg-brand-card p-3 rounded-xl border border-gray-800 space-y-2">
+                        <h4 class="font-black text-brand-gold">تعديل التكريم والجوائز</h4>
+                        <input type="text" id="adminGK" placeholder="أفضل حارس" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <input type="text" id="adminMVP" placeholder="أفضل لاعب" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <input type="text" id="adminScorer" placeholder="هداف البطولة" class="w-full p-1.5 bg-brand-dark border border-gray-700 rounded text-white">
+                        <button onclick="saveAwardSettings()" class="w-full py-1.5 bg-brand-gold text-brand-dark font-black rounded">حفظ الجوائز</button>
+                    </div>
+                </div>
+
+                <!-- Incoming Suggestions List -->
+                <div class="bg-brand-card p-3 rounded-xl border border-gray-800 space-y-2 text-xs">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-black text-brand-gold"><i class="fa-solid fa-inbox"></i> الاقتراحات الواردة</h4>
+                        <button onclick="clearAllSuggestions()" class="text-red-400 text-[10px]">مسح الكل</button>
+                    </div>
+                    <div id="adminSuggestionsList" class="max-h-28 overflow-y-auto space-y-1"></div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-brand-card border-t border-brand-gold/20 py-3 px-4 text-center mt-auto">
+            <p class="text-xs font-black text-brand-gold">جميع الحقوق محفوظة لبطولة العواد الرمضانية</p>
+            <p class="text-[9px] text-gray-400">تحت إشراف الإدارة المنظمة للبطولة</p>
+        </footer>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const fursanRoster = ["سعود لايق", "بندر صلاح", "باسل سعد", "نايف عساف", "زياد سعد", "عبدالرحمن فرحان", "عبدالله سعيدان", "فيصل سعيدان"];
+        const tahadiRoster = ["مشعل سعيدان", "هيف فرحان", "فهد عساف", "تركي محمد", "عبدالعزيز مفرح", "ريان مفرح", "تميم ماضي", "يزن فيصل"];
+
+        let registeredUsers = JSON.parse(localStorage.getItem('alawad_registered_users') || '[]');
+        let suggestionsList = JSON.parse(localStorage.getItem('alawad_suggestions_list') || '[]');
+
+        function renderRosters() {
+            document.getElementById('fursanRosterList').innerHTML = fursanRoster.map((name, i) => `
+                <div class="bg-brand-dark p-2 rounded-xl border border-brand-gold/20 flex items-center gap-2">
+                    <div class="w-6 h-6 rounded bg-brand-gold/20 text-brand-gold text-xs font-black flex items-center justify-center">${i+1}</div>
+                    <span class="font-bold text-white text-xs">${name}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('tahadiRosterList').innerHTML = tahadiRoster.map((name, i) => `
+                <div class="bg-brand-dark p-2 rounded-xl border border-brand-blue/20 flex items-center gap-2">
+                    <div class="w-6 h-6 rounded bg-brand-blue/20 text-brand-blue text-xs font-black flex items-center justify-center">${i+1}</div>
+                    <span class="font-bold text-white text-xs">${name}</span>
+                </div>
+            `).join('');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderRosters();
+            renderAdminUserLogs();
+            renderAdminSuggestions();
+
+            const savedName = localStorage.getItem('alawad_player_fullname');
+            if (savedName) {
+                document.getElementById('displayVisitorName').innerText = savedName;
+                document.getElementById('accessGateModal').classList.add('hidden');
+            } else {
+                document.getElementById('accessGateModal').classList.remove('hidden');
+            }
+        });
+
+        function submitAccessName(e) {
+            e.preventDefault();
+            const val = document.getElementById('visitorFullName').value.trim();
+            if (val.length >= 2) {
+                localStorage.setItem('alawad_player_fullname', val);
+                document.getElementById('displayVisitorName').innerText = val;
+                document.getElementById('accessGateModal').classList.add('hidden');
+
+                if (!registeredUsers.some(u => u.name === val)) {
+                    registeredUsers.push({ name: val, time: new Date().toLocaleTimeString('ar-SA') });
+                    localStorage.setItem('alawad_registered_users', JSON.stringify(registeredUsers));
+                    renderAdminUserLogs();
+                }
+                showToast("أهلاً بك في البوابة الرسمية للبطولة");
+            } else {
+                document.getElementById('gateError').classList.remove('hidden');
+            }
+        }
+
+        function renderAdminUserLogs() {
+            const cont = document.getElementById('registeredUsersContainer');
+            if (registeredUsers.length === 0) {
+                cont.innerHTML = `<div class="text-gray-500 text-xs italic">لا يوجد أسماء مسجلة بعد.</div>`;
+                return;
+            }
+            cont.innerHTML = registeredUsers.map((u, idx) => `
+                <div class="flex items-center justify-between bg-brand-dark p-1.5 rounded border border-gray-800">
+                    <div class="flex items-center gap-2">
+                        <span class="text-brand-gold font-bold">#${idx+1}</span>
+                        <span class="text-white">${u.name}</span>
+                        <span class="text-[9px] text-gray-500">(${u.time || ''})</span>
+                    </div>
+                    <button onclick="removeUserLog(${idx})" class="text-red-400 hover:text-red-300 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function removeUserLog(idx) {
+            registeredUsers.splice(idx, 1);
+            localStorage.setItem('alawad_registered_users', JSON.stringify(registeredUsers));
+            renderAdminUserLogs();
+            showToast("تم الحذف بنجاح");
+        }
+
+        function clearAllRegisteredUsers() {
+            registeredUsers = [];
+            localStorage.setItem('alawad_registered_users', JSON.stringify(registeredUsers));
+            renderAdminUserLogs();
+            showToast("تم مسح السجل كاملاً");
+        }
+
+        function switchRoom(roomId) {
+            document.querySelectorAll('.room-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.room-tab').forEach(el => el.classList.remove('active-tab'));
+
+            const target = document.getElementById(`room-${roomId}`);
+            if (target) target.classList.remove('hidden');
+
+            const tabBtn = document.getElementById(`tab-${roomId}`);
+            if (tabBtn) tabBtn.classList.add('active-tab');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toastAlert');
+            document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        function sendSuggestion(e) {
+            e.preventDefault();
+            const txt = document.getElementById('sugText').value.trim();
+            const sender = localStorage.getItem('alawad_player_fullname') || 'زائر';
+            if (txt) {
+                suggestionsList.push({ sender, text: txt, date: new Date().toLocaleDateString('ar-SA') });
+                localStorage.setItem('alawad_suggestions_list', JSON.stringify(suggestionsList));
+                document.getElementById('sugText').value = '';
+                renderAdminSuggestions();
+                showToast("تم إرسال اقتراحك للإدارة بنجاح!");
+            }
+        }
+
+        function renderAdminSuggestions() {
+            const cont = document.getElementById('adminSuggestionsList');
+            if (suggestionsList.length === 0) {
+                cont.innerHTML = `<div class="text-gray-500 text-xs italic">لا توجد اقتراحات.</div>`;
+                return;
+            }
+            cont.innerHTML = suggestionsList.map((s) => `
+                <div class="bg-brand-dark p-2 rounded border border-gray-800 space-y-0.5">
+                    <span class="text-brand-gold font-bold">${s.sender}:</span>
+                    <p class="text-gray-200">${s.text}</p>
+                </div>
+            `).join('');
+        }
+
+        function clearAllSuggestions() {
+            suggestionsList = [];
+            localStorage.setItem('alawad_suggestions_list', JSON.stringify(suggestionsList));
+            renderAdminSuggestions();
+            showToast("تم تفريغ صندوق الاقتراحات");
+        }
+
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+            document.getElementById('adminLoginErr').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('adminPassInput').value;
+            if (pass === 'B32') {
+                closeAdminModal();
+                document.getElementById('adminControlPanel').classList.remove('hidden');
+                document.getElementById('adminControlPanel').scrollIntoView({ behavior: 'smooth' });
+                showToast("تم الدخول للوحة التحكم بنجاح");
+            } else {
+                document.getElementById('adminLoginErr').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('adminControlPanel').classList.add('hidden');
+            showToast("تم تسجيل الخروج");
+        }
+
+        function saveMatchSettings() {
+            const m1t = document.getElementById('adminM1Time').value;
+            const m1s = document.getElementById('adminM1Score').value;
+            const m2t = document.getElementById('adminM2Time').value;
+            const m2s = document.getElementById('adminM2Score').value;
+
+            if (m1t) document.getElementById('m1-time').innerText = m1t;
+            if (m1s) document.getElementById('m1-score').innerText = m1s;
+            if (m2t) document.getElementById('m2-time').innerText = m2t;
+            if (m2s) document.getElementById('m2-score').innerText = m2s;
+
+            showToast("تم حفظ التعديلات");
+        }
+
+        function saveAwardSettings() {
+            const gk = document.getElementById('adminGK').value;
+            const mvp = document.getElementById('adminMVP').value;
+            const scorer = document.getElementById('adminScorer').value;
+
+            if (gk) document.getElementById('awardGK').innerText = gk;
+            if (mvp) document.getElementById('awardMVP').innerText = mvp;
+            if (scorer) document.getElementById('awardScorer').innerText = scorer;
+
+            showToast("تم تحديث الجوائز");
+        }
+    </script>
+</body>
+</html>
